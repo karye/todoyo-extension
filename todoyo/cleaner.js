@@ -33,28 +33,8 @@ class Cleaner {
         console.log("doc.lineCount ", doc.lineCount);
         console.log("doc.lineAt(17) ", doc.lineAt(17).text);
 
-        /* Vi söker efter kommentarer */
+        /* Vi söker efter console.log() */
         const regex = /(console.log\(\)|console.log\(.+\));/;
-
-        /* Dela upp i rader */
-        //let rader = text.split("\n");
-        //rader.forEach(rad => console.log(rad));
-
-/*         rader.map((codeline, idx) => {
-            //console.log(idx + 1, codeline);
-
-            if (regex.test(codeline)) {
-                console.log("Hittat: ", idx + 1, codeline);
-                vscode.window.showInformationMessage(codeline);
-
-                let startPos = editor.document.positionAt(20);
-                let endPos = editor.document.positionAt(40);
-                kommentar.push({
-                    range: new vscode.Range(startPos, endPos),
-                    hoverMessage: 'Number **123**'
-                });
-            }
-        }); */
 
         /* Gå igenom alla rader */
         for (let i = 0; i < doc.lineCount; i++) {
@@ -62,7 +42,7 @@ class Cleaner {
             /* Plocka ut raden */
             const line = doc.lineAt(i);
 
-            /* Hitta en kommentar */
+            /* Hittat en console.log() */
             if (regex.test(line.text)) {
                 console.log("Hittat: ", line.lineNumber);
                 kommentar.push({
@@ -71,8 +51,19 @@ class Cleaner {
                 });
             }
         }
-
+        /* Highlighta alla hittade rader */
         editor.setDecorations(smallNumberDecorationType, kommentar);
+
+        /* Skapa en sidopanel */
+        const panel = vscode.window.createWebviewPanel(
+            "console.log()",
+            "Kommentarer",
+            vscode.ViewColumn.Beside, {
+                // Enable javascript in the webview
+                enableScripts: true,
+            }
+        );
+        panel.webview.html = '<!DOCTYPE html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Test</title><link rel="stylesheet" href="style.css"></head><body><h1>Test</h1></body></html>';
     }
 }
 

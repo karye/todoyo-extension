@@ -21,7 +21,7 @@ function activate(context) {
 	// Now provide the implementation of the command with  registerCommand
 	// The commandId parameter must match the command field in package.json
 	let disposable = vscode.commands.registerCommand('extension.todoyo', function () {
-		cleaner.clearConsoleLogs();
+		cleaner.clearConsoleLogs(context);
 	});
 
 	//context.subscriptions.push(cleaner);

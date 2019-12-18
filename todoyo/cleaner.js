@@ -1,7 +1,8 @@
 const vscode = require("vscode");
+const path = require("path");
 
 class Cleaner {
-    clearConsoleLogs() {
+    clearConsoleLogs(context) {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage("Inget öppet dokument!");
@@ -10,6 +11,17 @@ class Cleaner {
 
         /* Hämta nuvarande dokument */
         const doc = editor.document;
+
+        /* Skapa en sidopanel */
+        const panel = vscode.window.createWebviewPanel(
+            "console.log()",
+            "Kommentarer",
+            vscode.ViewColumn.Beside, {
+                // Enable javascript in the webview
+                enableScripts: true
+            }
+        );
+        panel.webview.html = getWebviewContent();
 
         let kommentar = [];
         const smallNumberDecorationType = vscode.window.createTextEditorDecorationType({
@@ -49,22 +61,42 @@ class Cleaner {
                     range: new vscode.Range(line.range.start, line.range.end),
                     hoverMessage: 'Number **123**'
                 });
+                panel.webview.postMessage({
+                    command: 'Hittat: '+ line.lineNumber + '<br>'
+                });
             }
         }
         /* Highlighta alla hittade rader */
         editor.setDecorations(smallNumberDecorationType, kommentar);
-
-        /* Skapa en sidopanel */
-        const panel = vscode.window.createWebviewPanel(
-            "console.log()",
-            "Kommentarer",
-            vscode.ViewColumn.Beside, {
-                // Enable javascript in the webview
-                enableScripts: true,
-            }
-        );
-        panel.webview.html = '<!DOCTYPE html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Test</title><link rel="stylesheet" href="style.css"></head><body><h1>Test</h1></body></html>';
     }
+}
+
+function getWebviewContent(uri) {
+    return `<!DOCTYPE html>
+    <html lang="sv">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Test</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <h1>Test</h1>
+        <script>
+            const rubrik = document.querySelector('h1');
+
+            // Handle the message inside the webview
+            window.addEventListener('message', event => {
+                const message = event.data; // The JSON data our extension sent
+                switch (message.command) {
+                    case 'blah':
+                        rubrik.textContent += message.command;
+                        break;
+                }
+            });
+        </script>
+    </body>
+    </html>`;
 }
 
 module.exports = Cleaner;

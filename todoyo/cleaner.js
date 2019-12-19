@@ -46,7 +46,8 @@ class Cleaner {
         console.log("doc.lineAt(17) ", doc.lineAt(17).text);
 
         /* Vi söker efter console.log() */
-        const regex = /(console.log\(\)|console.log\(.+\));/;
+        /* const regex = /(console.log\(\)|console.log\(.+\));/; */
+        const regex = /\/\*.*\*\/|\/\//;
 
         /* Gå igenom alla rader */
         for (let i = 0; i < doc.lineCount; i++) {
@@ -56,10 +57,10 @@ class Cleaner {
 
             /* Hittat en console.log() */
             if (regex.test(line.text)) {
-                console.log("Hittat: ", line.lineNumber);
+                console.log("Hittat log rad: ", line.lineNumber);
                 kommentar.push({
                     range: new vscode.Range(line.range.start, line.range.end),
-                    hoverMessage: 'Number **123**'
+                    hoverMessage: 'Log'
                 });
                 panel.webview.postMessage({
                     command: 'Hittat: '+ line.lineNumber + '<br>'
@@ -71,7 +72,7 @@ class Cleaner {
     }
 }
 
-function getWebviewContent(uri) {
+function getWebviewContent() {
     return `<!DOCTYPE html>
     <html lang="sv">
     <head>
@@ -81,18 +82,15 @@ function getWebviewContent(uri) {
         <link rel="stylesheet" href="style.css">
     </head>
     <body>
-        <h1>Test</h1>
+        <h1>Kommentar i koden</h1>
+        <p></p>
         <script>
-            const rubrik = document.querySelector('h1');
+            const lista = document.querySelector('p');
 
             // Handle the message inside the webview
             window.addEventListener('message', event => {
                 const message = event.data; // The JSON data our extension sent
-                switch (message.command) {
-                    case 'blah':
-                        rubrik.textContent += message.command;
-                        break;
-                }
+                lista.innerHTML += message.command;
             });
         </script>
     </body>

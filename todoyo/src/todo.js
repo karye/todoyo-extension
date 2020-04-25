@@ -1,7 +1,6 @@
 const vscode = require("vscode");
-const path = require("path");
 
-class Cleaner {
+class Todo {
     clearConsoleLogs(context) {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -17,7 +16,6 @@ class Cleaner {
             "console.log()",
             "Kommentarer",
             vscode.ViewColumn.Beside, {
-                // Enable javascript in the webview
                 enableScripts: true
             }
         );
@@ -25,17 +23,18 @@ class Cleaner {
 
         let kommentar = [];
         const smallNumberDecorationType = vscode.window.createTextEditorDecorationType({
-            backgroundColor: 'pink',
             borderWidth: '1px',
             borderStyle: 'solid',
             overviewRulerColor: 'blue',
             overviewRulerLane: vscode.OverviewRulerLane.Right,
             light: {
                 // this color will be used in light color themes
+                backgroundColor: 'pink',
                 borderColor: 'red'
             },
             dark: {
                 // this color will be used in dark color themes
+                backgroundColor: 'brown',
                 borderColor: 'lightblue'
             }
         });
@@ -63,12 +62,24 @@ class Cleaner {
                     hoverMessage: 'Log'
                 });
                 panel.webview.postMessage({
-                    command: 'Hittat: '+ line.lineNumber + '<br>'
+                    command: 'start',
+                    text: '<p id="rad' + line.lineNumber + '">Hittat: ' + line.lineNumber + '</p>'
                 });
             }
         }
         /* Highlighta alla hittade rader */
         editor.setDecorations(smallNumberDecorationType, kommentar);
+
+        //vscode.window.onDidChangeActiveTextEditor
+        vscode.window.onDidChangeTextEditorSelection(() => {
+            let line = editor.selection.start.line;
+            console.log('line', line);
+            
+            panel.webview.postMessage({
+                command: 'update',
+                text: line
+            });
+        });
     }
 }
 
@@ -79,22 +90,40 @@ function getWebviewContent() {
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Test</title>
-        <link rel="stylesheet" href="style.css">
+        <style>
+        .on {
+            background: red;
+        }
+        </style>
     </head>
     <body>
         <h1>Kommentar i koden</h1>
-        <p></p>
+        <div id="lista"></div>
+        <div id="log"></div>
         <script>
-            const lista = document.querySelector('p');
-
+            const lista = document.querySelector('#lista');
+            const log = document.querySelector('#log');
+            
             // Handle the message inside the webview
             window.addEventListener('message', event => {
                 const message = event.data; // The JSON data our extension sent
-                lista.innerHTML += message.command;
+                switch (message.command) {
+                    case 'start':
+                        log.innerHTML = message.text;
+                        lista.innerHTML += message.text;
+                        break;
+                    case 'update':
+                        log.innerHTML = message.text;
+                        const element = document.querySelector('#rad' + message.text);
+                        element.classList.toggle("on");
+                        break;
+                    default:
+                        break;
+                }
             });
         </script>
     </body>
     </html>`;
 }
 
-module.exports = Cleaner;
+module.exports = Todo;
